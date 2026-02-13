@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Deutsch B2 – Worttrainer</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #9bc0e8;
+  color: #eaf6f6;
+}
+.container {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 20px;
+}
+h1, h2 { text-align: center; }
+
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+button {
+  background: #1e2f33;
+  color: #eaf6f6;
+  border: 1px solid #35545a;
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+button.active {
+  background: #58cc02;
+  color: #0f1c1f;
+}
+
+#preview table {
+  width: 100%;
+  border-collapse: separate; /* чтобы работали скругленные углы */
+  border-spacing: 0;
+  margin-top: 20px;
+  background: #eaf6f6; /* светлый фон таблицы */
+  color: #0f1c1f;      /* темный текст */
+  font-size: 1.1rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+#preview td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #c0d8e8;
+}
+
+#preview tr:last-child td {
+  border-bottom: none; /* убираем нижнюю границу у последней строки */
+}
+
+#preview tr:nth-child(even) {
+  background: #d8eaf2; /* чередующиеся строки для читаемости */
+}
+
+#preview tr:hover td {
+  background: #bfe0ea; /* подсветка при наведении */
+  transition: background 0.2s;
+}
+
+
+.game {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  margin-top: 25px;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.word {
+  background: #1e2f33;
+  border: 2px solid #35545a;
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.word.selected { background: #223f2a; }
+.word.correct { background: #58cc02; color: #0f1c1f; }
+.word.wrong { animation: shake 0.3s; border-color: #ff6b6b; }
+
+@keyframes shake {
+  0%{transform:translateX(0)}
+  25%{transform:translateX(-4px)}
+  50%{transform:translateX(4px)}
+  75%{transform:translateX(-4px)}
+  100%{transform:translateX(0)}
+}
+
+.next {
+  margin-top: 25px;
+  text-align: center;
+}
+
+#gameWrapper { display: none; }
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>Deutsch B2 – Worttrainer</h1>
+
+<!-- PREVIEW -->
+<div id="preview">
+  <h2>Посмотри слова 👀</h2>
+  <table id="wordTable"></table>
+  <div style="text-align:center;margin-top:20px;">
+    <button id="startBtn">▶ Старт</button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="gameWrapper">
+  <div class="controls" id="setButtons"></div>
+
+  <div class="game">
+    <div class="column" id="foreign"></div>
+    <div class="column" id="native"></div>
+  </div>
+
+  <div class="next">
+    <button id="nextBtn">Далее ▶</button>
+  </div>
+</div>
+
+</div>
+
+<audio id="bell" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+
+<script>
+const sets = [
+  [['die Unterstützung','поддержка'],['die Verantwortung','ответственность'],['die Herausforderung','вызов'],['die Entwicklung','развитие'],['der Einfluss','влияние'],['die Entscheidung','решение'],['die Voraussetzung','предпосылка']],
+  [['die Fähigkeit','способность'],['die Lösung','решение'],['die Gesellschaft','общество'],['der Klimawandel','изменение климата'],['die Umweltverschmutzung','загрязнение окружающей среды'],['die Regierung','правительство'],['die Wirtschaft','экономика']],
+  [['die Steuer','налог'],['die Demokratie','демократия'],['die Wahl','выборы'],['die Ernährung','питание'],['die Vorsorge','профилактика'],['die Krankheit','болезнь'],['die Bewegung','движение']],
+  [['die Erfahrung','опыт'],['die Bewerbung','заявление'],['die Beförderung','повышение'],['ausgewogen','сбалансированный'],['verantwortlich','ответственный'],['nachhaltig','устойчивый'],['der Verbrauch','потребление']],
+  [['der Verbraucher','потребитель'],['die Voraussetzung','предпосылка'],['die Bedeutung','значение'],['der Vorteil','преимущество'],['der Nachteil','недостаток'],['die Möglichkeit','возможность'],['die Herausforderung','испытание']],
+  [['beeinflussen','влиять'],['entwickeln','развивать'],['erkennen','распознавать'],['vermeiden','избегать'],['ermöglichen','делать возможным'],['feststellen','устанавливать'],['darstellen','представлять']],
+  [['berücksichtigen','принимать во внимание'],['erwähnen','упоминать'],['annehmen','принимать'],['verändern','менять'],['ablehnen','отклонять'],['zunehmen','увеличиваться'],['abnehmen','уменьшаться']],
+  [['betreffen','касаться'],['beurteilen','оценивать'],['überzeugen','убеждать'],['zusammenfassen','обобщать'],['hinterfragen','докапываться'],['daraufhin','вследствие этого'],['dementsprechend','соответственно']],
+  [['verantworten','отвечать за'],['auswirken','влиять'],['bereitstellen','предоставлять'],['beitragen','вносить вклад'],['vorhersehen','предвидеть'],['verwirklichen','осуществлять'],['angewiesen sein auf','быть зависимым от']],
+  [['anstreben','стремиться к'],['entbehren','лишаться'],['verzeichnen','фиксировать'],['aufkommen für','нести ответственность за'],['ausgleichen','уравновешивать'],['intensivieren','усиливать'],['prägen','формировать']],
+  // — 70 слов —
+  [['die Aussicht','перспектива'],['die Begründung','обоснование'],['der Beitrag','вклад'],['die Ebene','уровень'],['die Ergänzung','дополнение'],['die Erkenntnis','осознание'],['die Aussage','утверждение']],
+  [['das Merkmal','признак'],['der Umstand','обстоятельство'],['die Tendenz','тенденция'],['der Hintergrund','фон'],['das Verfahren','процедура'],['die Grundlage','основа'],['die Konsequenz','последствие']],
+  [['die Maßnahme','мера'],['der Umgang','обращение'],['die Bedingung','условие'],['der Aufwand','затраты'],['das Prinzip','принцип'],['die Struktur','структура'],['der Bereich','область']],
+  [['die Initiative','инициатива'],['die Kooperation','сотрудничество'],['die Effizienz','эффективность'],['die Perspektive','перспектива'],['der Beitrag','вклад'],['der Prozess','процесс'],['die Struktur','структура']],
+  [['der Aspekt','аспект'],['die Komponente','компонент'],['die Ressource','ресурс'],['der Schwerpunkt','акцент'],['die Strategie','стратегия'],['die Funktion','функция'],['die Bedeutung','значение']],
+  [['die Kompetenz','компетенция'],['die Alternative','альтернатива'],['der Wettbewerb','конкуренция'],['das Konzept','концепция'],['der Vorteil','преимущество'],['das Risiko','риск'],['die Chance','шанс']],
+  [['die Verantwortung','ответственность'],['die Haltung','позиция'],['die Motivation','мотивация'],['die Zielsetzung','постановка цели'],['die Anpassung','адаптация'],['die Diversität','разнообразие'],['die Einschränkung','ограничение']],
+  [['der Beitrag','вклад'],['die Entwicklung','развитие'],['die Herausforderung','испытание'],['die Anwendung','применение'],['die Erörterung','обсуждение'],['die Bewertung','оценка'],['die Überlegung','размышление']],
+  [['die Voraussetzung','условие'],['der Status','статус'],['die Teilnahme','участие'],['die Verpflichtung','обязанность'],['die Integration','интеграция'],['die Vermittlung','посредничество'],['der Einfluss','влияние']],
+  [['die Wahrnehmung','восприятие'],['die Bewertung','оценка'],['der Schwerpunkt','приоритет'],['die Darstellung','представление'],['die Zustimmung','согласие'],['der Unterschied','различие'],['die Vielfalt','разнообразие']]
+];
+
+
+const preview = document.getElementById('preview');
+const gameWrapper = document.getElementById('gameWrapper');
+const wordTable = document.getElementById('wordTable');
+const foreignCol = document.getElementById('foreign');
+const nativeCol = document.getElementById('native');
+const setButtons = document.getElementById('setButtons');
+const nextBtn = document.getElementById('nextBtn');
+const startBtn = document.getElementById('startBtn');
+
+let currentSet = 0;
+let selectedF = null, selectedN = null, pairs = [];
+
+function shuffle(a){ return a.sort(()=>Math.random()-0.5); }
+
+// ===== PREVIEW =====
+function showPreview(index){
+  currentSet = index;
+  preview.style.display = 'block';
+  gameWrapper.style.display = 'none';
+
+  wordTable.innerHTML = '';
+  sets[index].forEach(([de,ru])=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${de}</td><td>${ru}</td>`;
+    wordTable.appendChild(tr);
+  });
+
+  document.querySelectorAll('.controls button')
+    .forEach((b,i)=>b.classList.toggle('active', i===index));
+}
+
+// ===== GAME =====
+function startGame(){
+  preview.style.display = 'none';
+  gameWrapper.style.display = 'block';
+
+  foreignCol.innerHTML='';
+  nativeCol.innerHTML='';
+  selectedF = selectedN = null;
+
+  pairs = sets[currentSet].map(p=>({f:p[0],n:p[1],done:false}));
+
+  shuffle([...pairs]).forEach(p=>createWord(p.f,p,'f'));
+  shuffle([...pairs]).forEach(p=>createWord(p.n,p,'n'));
+}
+
+function createWord(text,pair,type){
+  const d = document.createElement('div');
+  d.className='word';
+  d.textContent=text;
+  d.onclick=()=>selectWord(d,pair,type);
+  (type==='f'?foreignCol:nativeCol).appendChild(d);
+}
+
+function selectWord(el,pair,type){
+  if(pair.done) return;
+  el.classList.add('selected');
+  type==='f'?selectedF={el,pair}:selectedN={el,pair};
+  check();
+}
+
+function speak(text){
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang='de-DE';
+  u.pitch=0.6;
+  speechSynthesis.speak(u);
+}
+
+function check(){
+  if(!selectedF||!selectedN) return;
+  if(selectedF.pair===selectedN.pair){
+    const word = selectedF.pair.f;
+    selectedF.el.className='word correct';
+    selectedN.el.className='word correct';
+    selectedF.pair.done=true;
+
+    const bell = new Audio(document.getElementById('bell').src);
+    bell.onended = ()=>speak(word);
+    bell.play();
+  }
+  selectedF = selectedN = null;
+}
+
+// ===== BUTTONS =====
+sets.forEach((_,i)=>{
+  const b=document.createElement('button');
+  b.textContent=i+1;
+  b.onclick=()=>showPreview(i);
+  setButtons.appendChild(b);
+});
+
+nextBtn.onclick=()=>{
+  const next = Math.floor(Math.random()*sets.length);
+  showPreview(next);
+};
+
+startBtn.onclick = startGame;
+
+// INIT
+showPreview(0);
+</script>
+</body>
+</html>

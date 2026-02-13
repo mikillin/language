@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Deutsch B2 – Worttrainer</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f1c1f;
+      color: #eaf6f6;
+    }
+    .container { max-width: 900px; margin: 40px auto; padding: 20px; }
+    h1 { text-align: center; margin-bottom: 20px; }
+    .controls { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+    button {
+      background: #1e2f33;
+      color: #eaf6f6;
+      border: 1px solid #35545a;
+      padding: 8px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    button:hover { background: #263c41; }
+    button.active { background: #58cc02; color: #0f1c1f; border-color: #58cc02; }
+    .game { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 25px; }
+    .column { display: flex; flex-direction: column; gap: 12px; }
+    .word {
+      background: #1e2f33;
+      border: 2px solid #35545a;
+      border-radius: 12px;
+      padding: 12px 16px;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      transition: 0.2s;
+    }
+    .word:hover { background: #263c41; }
+    .word.selected { border-color: #58cc02; background: #223f2a; }
+    .word.correct { background: #58cc02; color: #0f1c1f; border-color: #58cc02; cursor: default; }
+    .word.wrong { animation: shake 0.3s; border-color: #ff6b6b; }
+    @keyframes shake {
+      0%{transform:translateX(0)}25%{transform:translateX(-4px)}50%{transform:translateX(4px)}75%{transform:translateX(-4px)}100%{transform:translateX(0)}
+    }
+    .next { margin-top: 25px; display: flex; justify-content: center; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Deutsch B2 – Wortzuordnung</h1>
+
+  <div class="controls" id="setButtons"></div>
+
+  <div class="game">
+    <div class="column" id="foreign"></div>
+    <div class="column" id="native"></div>
+  </div>
+
+  <div class="next">
+    <button id="nextBtn">Далее ▶</button>
+  </div>
+</div>
+
+<audio id="bell" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+
+<script>
+const sets = [
+  [
+    ['der Fortschritt','прогресс'],['die Voraussetzung','предпосылка'],['das Ergebnis','результат'],
+    ['die Verantwortung','ответственность'],['der Einfluss','влияние'],['das Verhalten','поведение'],['die Erfahrung','опыт']
+  ],
+  [
+    ['die Herausforderung','вызов'],['der Zusammenhang','взаимосвязь'],['das Bedürfnis','потребность'],
+    ['die Entwicklung','развитие'],['der Anspruch','требование'],['das Ziel','цель'],['die Entscheidung','решение']
+  ],
+  [
+    ['der Wettbewerb','конкуренция'],['die Fähigkeit','способность'],['das Konzept','концепция'],
+    ['die Maßnahme','мера'],['der Vorteil','преимущество'],['das Risiko','риск'],['die Möglichkeit','возможность']
+  ],
+  [
+    ['der Umgang','обращение'],['die Auswirkung','последствие'],['das Umfeld','окружение'],
+    ['die Bedingung','условие'],['der Aufwand','усилие'],['das Mittel','средство'],['die Ursache','причина']
+  ],
+  [
+    ['die Gesellschaft','общество'],['der Beitrag','вклад'],['das Verhältnis','соотношение'],
+    ['die Sicherheit','безопасность'],['der Zweck','цель'],['das Wissen','знание'],['die Rolle','роль']
+  ],
+  [
+    ['der Verlauf','ход (процесса)'],['die Leistung','производительность'],['das System','система'],
+    ['die Struktur','структура'],['der Bereich','область'],['das Prinzip','принцип'],['die Folge','следствие']
+  ],
+  [
+    ['die Bedeutung','значение'],['der Faktor','фактор'],['das Niveau','уровень'],
+    ['die Reaktion','реакция'],['der Vorteil','преимущество'],['das Problem','проблема'],['die Lösung','решение']
+  ],
+  [
+    ['der Inhalt','содержание'],['die Anforderung','требование'],['das Ereignis','событие'],
+    ['die Wirkung','эффект'],['der Zustand','состояние'],['das Verfahren','процедура'],['die Grundlage','основа']
+  ],
+  [
+    ['die Tendenz','тенденция'],['der Hintergrund','фон'],['das Merkmal','признак'],
+    ['die Alternative','альтернатива'],['der Vergleich','сравнение'],['das Beispiel','пример'],['die Konsequenz','последствие']
+  ],
+  [
+    ['der Standpunkt','точка зрения'],['die Einschätzung','оценка'],['das Wachstum','рост'],
+    ['die Absicht','намерение'],['der Konflikt','конфликт'],['das Argument','аргумент'],['die Lösung','решение']
+  ]
+];
+
+const foreignCol = document.getElementById('foreign');
+const nativeCol = document.getElementById('native');
+const bell = document.getElementById('bell');
+const setButtons = document.getElementById('setButtons');
+const nextBtn = document.getElementById('nextBtn');
+
+let selectedF=null, selectedN=null, currentPairs=[], currentSet=0;
+
+function shuffle(a){return a.sort(()=>Math.random()-0.5)}
+
+function loadSet(index){
+  currentSet=index;
+  document.querySelectorAll('.controls button').forEach((b,i)=>b.classList.toggle('active',i===index));
+  foreignCol.innerHTML=''; nativeCol.innerHTML=''; selectedF=null; selectedN=null;
+  currentPairs=sets[index].map(p=>({f:p[0],n:p[1],done:false}));
+  shuffle([...currentPairs]).forEach(p=>createWord(p.f,p,'f'));
+  shuffle([...currentPairs]).forEach(p=>createWord(p.n,p,'n'));
+}
+
+function createWord(text,pair,type){
+  const d=document.createElement('div'); d.className='word'; d.textContent=text;
+  d.onclick=()=>selectWord(d,pair,type); (type==='f'?foreignCol:nativeCol).appendChild(d);
+}
+
+function selectWord(el,pair,type){
+  if(pair.done) return;
+  (type==='f'?foreignCol:nativeCol).querySelectorAll('.word').forEach(w=>w.classList.remove('selected'));
+  el.classList.add('selected'); type==='f'?selectedF={el,pair}:selectedN={el,pair}; check();
+}
+
+function check(){
+  if(!selectedF||!selectedN) return;
+  if(selectedF.pair===selectedN.pair){
+    selectedF.el.className='word correct'; selectedN.el.className='word correct';
+    selectedF.pair.done=true; bell.currentTime=0; bell.play();
+  } else {
+    [selectedF.el,selectedN.el].forEach(e=>e.classList.add('wrong'));
+    setTimeout(()=>[selectedF.el,selectedN.el].forEach(e=>e.className='word'),350);
+  }
+  selectedF=null; selectedN=null;
+}
+
+sets.forEach((_,i)=>{
+  const b=document.createElement('button'); b.textContent=i+1; b.onclick=()=>loadSet(i); setButtons.appendChild(b);
+});
+
+nextBtn.onclick=()=>loadSet(Math.floor(Math.random()*sets.length));
+loadSet(0);
+</script>
+
+<script>
+// ====== EXAM MODE ======
+let examMode = false;
+let examQueue = [];
+let examScore = 0;
+let examTimer = null;
+let timeLeft = 60; // seconds
+
+const examBtn = document.createElement('button');
+examBtn.id = 'examBtn';
+examBtn.textContent = 'Экзамен B2 (20 слов)';
+const examStatus = document.createElement('div');
+examStatus.id = 'examStatus';
+examStatus.style.alignSelf = 'center'; examStatus.style.opacity = '.8';
+
+const nextWrap = document.querySelector('.next');
+nextWrap.appendChild(examBtn);
+nextWrap.appendChild(examStatus);
+
+// pool of nouns without articles (mixed endings B2)
+const examPool = [
+  ['Zeitung','die'],['Übung','die'],['Rechnung','die'],['Freiheit','die'],['Möglichkeit','die'],['Sicherheit','die'],
+  ['Freundschaft','die'],['Mannschaft','die'],['Bäckerei','die'],['Nation','die'],['Diskussion','die'],['Version','die'],
+  ['Qualität','die'],['Musik','die'],['Konkurrenz','die'],['Agentur','die'],['Lehrerin','die'],['Ärztin','die'],
+  ['Mädchen','das'],['Tischlein','das'],['Brötchen','das'],['Zentrum','das'],['Museum','das'],['Datum','das'],
+  ['Instrument','das'],['Experiment','das'],['Dokument','das'],['Thema','das'],['Klima','das'],['Wachstum','das'],
+  ['Essen','das'],['Leben','das'],['Lernen','das'],['Auto','das'],['Radio','das'],
+  ['Lehrer','der'],['Vogel','der'],['Garten','der'],['Frühling','der'],['Schmetterling','der'],['Lehrling','der'],
+  ['Kapitalismus','der'],['Tourismus','der'],['Motor','der'],['Professor','der'],['Doktor','der'],
+  ['Teppich','der'],['König','der'],['Journalist','der'],['Spezialist','der']
+];
+
+function startExam(){
+  examMode = true;
+  examScore = 0;
+  timeLeft = 60;
+  examQueue = shuffle([...examPool]).slice(0,20).map(x=>({w:x[0], a:x[1], done:false}));
+  renderExam();
+  updateStatus();
+  if (examTimer) clearInterval(examTimer);
+  examTimer = setInterval(()=>{
+    timeLeft--; updateStatus();
+    if(timeLeft<=0) finishExam();
+  },1000);
+}
+
+function renderExam(){
+  foreignCol.innerHTML=''; nativeCol.innerHTML=''; selectedF=null; selectedN=null;
+  const current = examQueue.find(q=>!q.done);
+  if(!current){ finishExam(); return; }
+  const w = document.createElement('div'); w.className='word'; w.textContent=current.w; foreignCol.appendChild(w);
+  ['der','die','das'].forEach(a=>{
+    const d=document.createElement('div'); d.className='word'; d.textContent=a;
+    d.onclick=()=>answerExam(a, current, d);
+    nativeCol.appendChild(d);
+  });
+}
+
+function answerExam(a, q, el){
+  if(!examMode) return;
+  if(a===q.a){ examScore++; bell.currentTime=0; bell.play(); el.classList.add('correct'); }
+  else { el.classList.add('wrong'); }
+  q.done = true;
+  setTimeout(renderExam, 350);
+}
+
+function updateStatus(){
+  const left = examQueue.filter(q=>!q.done).length;
+  examStatus.textContent = `Экзамен: осталось ${left}/20 · очки ${examScore} · время ${timeLeft}с`;
+}
+
+function finishExam(){
+  clearInterval(examTimer); examTimer=null; examMode=false;
+  foreignCol.innerHTML=''; nativeCol.innerHTML='';
+  const res = document.createElement('div'); res.className='word correct';
+  const grade = Math.round((examScore/20)*100);
+  res.textContent = `Результат: ${examScore}/20 (${grade}%)`;
+  foreignCol.appendChild(res);
+  examStatus.textContent = 'Экзамен завершён';
+}
+
+examBtn.onclick = startExam;
+</script>
+</body>
+</html>
