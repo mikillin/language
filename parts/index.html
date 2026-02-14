@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<title>Сборка слов (DE C1)</title>
+<style>
+  body {
+    font-family: system-ui, sans-serif;
+    background: #f6f6f6;
+    padding: 20px;
+  }
+  button {
+    padding: 8px 14px;
+    margin: 6px 4px;
+    cursor: pointer;
+  }
+  .card {
+    background: #fff;
+    padding: 12px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  .parts, .dropzone {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .part {
+    padding: 6px 10px;
+    background: #e0e0e0;
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .drop {
+    min-width: 50px;
+    min-height: 32px;
+    border: 2px dashed #bbb;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .drop.active {
+    border-color: #3b82f6;
+    background: #eaf1ff;
+  }
+  .correct {
+    border: 2px solid green;
+    background: #dbffdb;
+  }
+</style>
+</head>
+<body>
+
+<div id="screen-select">
+  <h2>Выбор темы</h2>
+  <select id="themeSelect"></select>
+  <br>
+  <button id="openThemeBtn">Открыть тему</button>
+</div>
+
+<div id="screen-list" style="display:none;">
+  <h2 id="themeTitle"></h2>
+  <ul id="wordsList"></ul>
+  <button id="startBtn">Начать тренировку</button>
+  <button id="backToThemesBtn">Назад к темам</button>
+</div>
+
+<div id="screen-train" style="display:none;">
+  <h2>Собери слово</h2>
+  <div id="progress"></div>
+  <div id="trainArea"></div>
+  <button id="backToListBtn">Назад к списку</button>
+</div>
+
+<script>
+const setsData = [
+  {
+    name: "Тема 1",
+    words: [
+      { ru:"ответственность", de:"Verantwortung", art:"die", parts:["Ver","ant","wort","ung"] },
+      { ru:"развитие", de:"Entwicklung", art:"die", parts:["Ent","wick","lung"] },
+      { ru:"доверие", de:"Vertrauen", art:"das", parts:["Ver","trau","en"] }
+    ]
+  },
+  {
+    name: "Тема 2",
+    words: [
+      { ru:"абстракция", de:"Abstraktion", art:"die", parts:["Abs","trak","tion"] },
+      { ru:"анализ", de:"Analyse", art:"die", parts:["Ana","lyse"] },
+      { ru:"аргумент", de:"Argument", art:"das", parts:["Ar","gu","ment"] }
+    ]
+  }
+];
+
+const screenSelect = document.getElementById("screen-select");
+const screenList   = document.getElementById("screen-list");
+const screenTrain  = document.getElementById("screen-train");
+
+const themeSelect = document.getElementById("themeSelect");
+const wordsList   = document.getElementById("wordsList");
+const themeTitle  = document.getElementById("themeTitle");
+const trainArea   = document.getElementById("trainArea");
+const progressEl  = document.getElementById("progress");
+
+let currentSet = null;
+let correctCount = 0;
+
+setsData.forEach((set, i) => {
+  const opt = document.createElement("option");
+  opt.value = i;
+  opt.textContent = set.name;
+  themeSelect.appendChild(opt);
+});
+
+document.getElementById("openThemeBtn").onclick = () => {
+  currentSet = setsData[themeSelect.value];
+  themeTitle.textContent = currentSet.name;
+  wordsList.innerHTML = "";
+
+  currentSet.words.forEach(w => {
+    const li = document.createElement("li");
+    li.textContent = `${w.de} — ${w.ru}`;
+    wordsList.appendChild(li);
+  });
+
+  switchScreen(screenList);
+};
+
+document.getElementById("startBtn").onclick = () => {
+  correctCount = 0;
+  localStorage.setItem("progress", "0");
+  startTraining();
+  switchScreen(screenTrain);
+};
+
+document.getElementById("backToThemesBtn").onclick = () => switchScreen(screenSelect);
+document.getElementById("backToListBtn").onclick   = () => switchScreen(screenList);
+
+function switchScreen(screen) {
+  screenSelect.style.display = "none";
+  screenList.style.display = "none";
+  screenTrain.style.display = "none";
+  screen.style.display = "block";
+}
+
+function startTraining() {
+  trainArea.innerHTML = "";
+  progressEl.textContent = "Правильно: 0 / " + currentSet.words.length;
+
+  currentSet.words.forEach(w => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const title = document.createElement("div");
+    title.innerHTML = `<strong>${w.ru}</strong> (${w.art})`;
+
+    const partsBox = document.createElement("div");
+    partsBox.className = "parts";
+
+    shuffle([...w.parts]).forEach(p => {
+      const span = document.createElement("div");
+      span.className = "part";
+      span.textContent = p;
+      span.draggable = true;
+
+      span.ondragstart = e => {
+        e.dataTransfer.setData("text", p);
+        e.dataTransfer.setData("from", "parts");
+      };
+
+      span.onclick = () => movePartByClick(span, card, w);
+
+      partsBox.appendChild(span);
+    });
+
+    const dropzone = document.createElement("div");
+    dropzone.className = "dropzone";
+
+    w.parts.forEach(() => {
+      const drop = document.createElement("div");
+      drop.className = "drop";
+
+      drop.ondragover = e => e.preventDefault();
+      drop.ondrop = e => {
+        const data = e.dataTransfer.getData("text");
+        if (!drop.textContent) {
+          drop.textContent = data;
+          checkWord(card, w);
+        }
+      };
+
+      drop.onclick = () => {
+        if (!drop.textContent) return;
+        returnPartByClick(drop, partsBox);
+        checkWord(card, w);
+      };
+
+      dropzone.appendChild(drop);
+    });
+
+    card.appendChild(title);
+    card.appendChild(partsBox);
+    card.appendChild(dropzone);
+    trainArea.appendChild(card);
+
+    highlightNextDrop(card);
+  });
+}
+
+function movePartByClick(partEl, card, word) {
+  const drops = [...card.querySelectorAll(".drop")];
+  const target = drops.find(d => !d.textContent);
+  if (!target) return;
+
+  target.textContent = partEl.textContent;
+  partEl.remove();
+
+  highlightNextDrop(card);
+  checkWord(card, word);
+}
+
+function returnPartByClick(dropEl, partsBox) {
+  const span = document.createElement("div");
+  span.className = "part";
+  span.textContent = dropEl.textContent;
+  span.draggable = true;
+
+  span.ondragstart = e => e.dataTransfer.setData("text", span.textContent);
+  span.onclick = () => movePartByClick(span, dropEl.closest(".card"), getWordFromCard(dropEl));
+
+  partsBox.appendChild(span);
+  dropEl.textContent = "";
+}
+
+function highlightNextDrop(card) {
+  card.querySelectorAll(".drop").forEach(d => d.classList.remove("active"));
+  const next = [...card.querySelectorAll(".drop")].find(d => !d.textContent);
+  if (next) next.classList.add("active");
+}
+
+function checkWord(card, word) {
+  if (card.dataset.done === "true") return;
+
+  const drops = [...card.querySelectorAll(".drop")].map(d => d.textContent);
+  if (drops.join("") === word.parts.join("")) {
+    card.classList.add("correct");
+    card.dataset.done = "true";
+    correctCount++;
+    localStorage.setItem("progress", correctCount);
+    progressEl.textContent = `Правильно: ${correctCount} / ${currentSet.words.length}`;
+  }
+}
+
+function getWordFromCard(dropEl) {
+  const ru = dropEl.closest(".card").querySelector("strong").textContent;
+  return currentSet.words.find(w => w.ru === ru);
+}
+
+function shuffle(arr) {
+  return arr.sort(() => Math.random() - 0.5);
+}
+</script>
+
+</body>
+</html>
