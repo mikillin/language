@@ -6,13 +6,14 @@
 <style>
   body {
     font-family: system-ui, sans-serif;
-    background: #f6f6f6;
-    padding: 20px;
+    background: #81c774;
+   
   }
   button {
     padding: 8px 14px;
     margin: 6px 4px;
     cursor: pointer;
+	font-size: 20px;
   }
   .card {
     background: #fff;
@@ -20,6 +21,8 @@
     margin-bottom: 16px;
     border-radius: 8px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+	font-weight: 900;
+    font-size: 20px;
   }
   .parts, .dropzone {
     display: flex;
@@ -33,6 +36,7 @@
     border-radius: 6px;
     cursor: pointer;
     user-select: none;
+	
   }
   .drop {
     min-width: 50px;
@@ -42,6 +46,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+	cursor: pointer;
   }
   .drop.active {
     border-color: #3b82f6;
@@ -51,6 +56,16 @@
     border: 2px solid green;
     background: #dbffdb;
   }
+  #screen-list{
+	font-size: 27px;
+	font-weight: bold;}
+	#themeSelect {
+	font-size: 27px;}
+	
+	}
+	#wordsList{
+	font-weight: 900;
+	}
 </style>
 </head>
 <body>
@@ -79,19 +94,243 @@
 <script>
 const setsData = [
   {
-    name: "Тема 1",
+    name: "Работа и карьера",
     words: [
       { ru:"ответственность", de:"Verantwortung", art:"die", parts:["Ver","ant","wort","ung"] },
-      { ru:"развитие", de:"Entwicklung", art:"die", parts:["Ent","wick","lung"] },
-      { ru:"доверие", de:"Vertrauen", art:"das", parts:["Ver","trau","en"] }
+      { ru:"повышение", de:"Beförderung", art:"die", parts:["Be","för","de","rung"] },
+      { ru:"увольнение", de:"Kündigung", art:"die", parts:["Kün","di","gung"] },
+      { ru:"должность", de:"Position", art:"die", parts:["Po","si","tion"] },
+      { ru:"зарплата", de:"Gehalt", art:"das", parts:["Ge","halt"] },
+      { ru:"переговоры", de:"Verhandlung", art:"die", parts:["Ver","hand","lung"] },
+      { ru:"собеседование", de:"Vorstellungsgespräch", art:"das", parts:["Vor","stel","lungs","ge","spräch"] }
     ]
   },
   {
-    name: "Тема 2",
+    name: "Образование",
     words: [
-      { ru:"абстракция", de:"Abstraktion", art:"die", parts:["Abs","trak","tion"] },
-      { ru:"анализ", de:"Analyse", art:"die", parts:["Ana","lyse"] },
-      { ru:"аргумент", de:"Argument", art:"das", parts:["Ar","gu","ment"] }
+      { ru:"образование", de:"Bildung", art:"die", parts:["Bil","dung"] },
+      { ru:"исследование", de:"Forschung", art:"die", parts:["For","schung"] },
+      { ru:"знания", de:"Kenntnisse", art:"die", parts:["Kennt","nis","se"] },
+      { ru:"квалификация", de:"Qualifikation", art:"die", parts:["Qua","li","fi","ka","tion"] },
+      { ru:"дисциплина", de:"Disziplin", art:"die", parts:["Dis","zi","plin"] },
+      { ru:"экзамен", de:"Prüfung", art:"die", parts:["Prü","fung"] },
+      { ru:"лекция", de:"Vorlesung", art:"die", parts:["Vor","le","sung"] }
+    ]
+  },
+  {
+    name: "Технологии",
+    words: [
+      { ru:"разработка", de:"Entwicklung", art:"die", parts:["Ent","wick","lung"] },
+      { ru:"искусственный интеллект", de:"künstliche Intelligenz", art:"die", parts:["kün","stli","che","In","tel","li","genz"] },
+      { ru:"алгоритм", de:"Algorithmus", art:"der", parts:["Al","go","rith","mus"] },
+      { ru:"данные", de:"Daten", art:"die", parts:["Da","ten"] },
+      { ru:"безопасность", de:"Sicherheit", art:"die", parts:["Si","cher","heit"] },
+      { ru:"система", de:"System", art:"das", parts:["Sys","tem"] },
+      { ru:"программирование", de:"Programmierung", art:"die", parts:["Pro","gram","mie","rung"] }
+    ]
+  },
+  {
+    name: "Психология",
+    words: [
+      { ru:"восприятие", de:"Wahrnehmung", art:"die", parts:["Wahr","nehm","ung"] },
+      { ru:"мотивация", de:"Motivation", art:"die", parts:["Mo","ti","va","tion"] },
+      { ru:"поведение", de:"Verhalten", art:"das", parts:["Ver","hal","ten"] },
+      { ru:"эмоция", de:"Emotion", art:"die", parts:["E","mo","tion"] },
+      { ru:"самооценка", de:"Selbstbewusstsein", art:"das", parts:["Selbst","be","wusst","sein"] },
+      { ru:"стресс", de:"Stress", art:"der", parts:["Stress"] },
+      { ru:"привычка", de:"Gewohnheit", art:"die", parts:["Ge","wohn","heit"] }
+    ]
+  },
+  {
+    name: "Политика и общество",
+    words: [
+      { ru:"ответственность", de:"Verantwortung", art:"die", parts:["Ver","ant","wort","ung"] },
+      { ru:"закон", de:"Gesetz", art:"das", parts:["Ge","setz"] },
+      { ru:"реформа", de:"Reform", art:"die", parts:["Re","form"] },
+      { ru:"общество", de:"Gesellschaft", art:"die", parts:["Ge","sell","schaft"] },
+      { ru:"влияние", de:"Einfluss", art:"der", parts:["Ein","fluss"] },
+      { ru:"правительство", de:"Regierung", art:"die", parts:["Re","gie","rung"] },
+      { ru:"участие", de:"Beteiligung", art:"die", parts:["Be","tei","li","gung"] }
+    ]
+  },
+  {
+    name: "Экономика и финансы",
+    words: [
+      { ru:"экономика", de:"Wirtschaft", art:"die", parts:["Wirt","schaft"] },
+      { ru:"инвестиция", de:"Investition", art:"die", parts:["In","ves","ti","tion"] },
+      { ru:"прибыль", de:"Gewinn", art:"der", parts:["Ge","winn"] },
+      { ru:"убыток", de:"Verlust", art:"der", parts:["Ver","lust"] },
+      { ru:"бюджет", de:"Budget", art:"das", parts:["Bud","get"] },
+      { ru:"налоги", de:"Steuern", art:"die", parts:["Steu","ern"] },
+      { ru:"кризис", de:"Krise", art:"die", parts:["Kri","se"] }
+    ]
+  },
+  {
+    name: "Право",
+    words: [
+      { ru:"право", de:"Recht", art:"das", parts:["Recht"] },
+      { ru:"обязанность", de:"Pflicht", art:"die", parts:["Pflicht"] },
+      { ru:"договор", de:"Vertrag", art:"der", parts:["Ver","trag"] },
+      { ru:"нарушение", de:"Verstoß", art:"der", parts:["Ver","stoß"] },
+      { ru:"запрет", de:"Verbot", art:"das", parts:["Ver","bot"] },
+      { ru:"разрешение", de:"Erlaubnis", art:"die", parts:["Er","laub","nis"] },
+      { ru:"компенсация", de:"Entschädigung", art:"die", parts:["Ent","schä","di","gung"] }
+    ]
+  },
+  {
+    name: "Медицина и здоровье",
+    words: [
+      { ru:"лечение", de:"Behandlung", art:"die", parts:["Be","hand","lung"] },
+      { ru:"диагноз", de:"Diagnose", art:"die", parts:["Dia","gno","se"] },
+      { ru:"симптом", de:"Symptom", art:"das", parts:["Symp","tom"] },
+      { ru:"профилактика", de:"Vorsorge", art:"die", parts:["Vor","sor","ge"] },
+      { ru:"терапия", de:"Therapie", art:"die", parts:["The","ra","pie"] },
+      { ru:"заболевание", de:"Erkrankung", art:"die", parts:["Er","kran","kung"] },
+      { ru:"восстановление", de:"Genesung", art:"die", parts:["Ge","ne","sung"] }
+    ]
+  },
+  {
+    name: "Экология",
+    words: [
+      { ru:"окружающая среда", de:"Umwelt", art:"die", parts:["Um","welt"] },
+      { ru:"загрязнение", de:"Verschmutzung", art:"die", parts:["Ver","schmut","zung"] },
+      { ru:"переработка", de:"Recycling", art:"das", parts:["Re","cy","cling"] },
+      { ru:"устойчивость", de:"Nachhaltigkeit", art:"die", parts:["Nach","hal","tig","keit"] },
+      { ru:"климат", de:"Klima", art:"das", parts:["Kli","ma"] },
+      { ru:"ресурсы", de:"Ressourcen", art:"die", parts:["Res","sour","cen"] },
+      { ru:"выбросы", de:"Emissionen", art:"die", parts:["E","mis","sio","nen"] }
+    ]
+  },
+  {
+    name: "Медиа и коммуникация",
+    words: [
+      { ru:"сообщение", de:"Nachricht", art:"die", parts:["Nach","richt"] },
+      { ru:"общественное мнение", de:"öffentliche Meinung", art:"die", parts:["öf","fent","li","che","Mei","nung"] },
+      { ru:"влияние", de:"Einfluss", art:"der", parts:["Ein","fluss"] },
+      { ru:"дискуссия", de:"Diskussion", art:"die", parts:["Dis","kus","sion"] },
+      { ru:"пропаганда", de:"Propaganda", art:"die", parts:["Pro","pa","gan","da"] },
+      { ru:"информация", de:"Information", art:"die", parts:["In","for","ma","tion"] },
+      { ru:"манипуляция", de:"Manipulation", art:"die", parts:["Ma","ni","pu","la","tion"] }
+    ]
+  },
+  {
+    name: "Философия",
+    words: [
+      { ru:"смысл", de:"Sinn", art:"der", parts:["Sinn"] },
+      { ru:"ценность", de:"Wert", art:"der", parts:["Wert"] },
+      { ru:"истина", de:"Wahrheit", art:"die", parts:["Wahr","heit"] },
+      { ru:"свобода", de:"Freiheit", art:"die", parts:["Frei","heit"] },
+      { ru:"сознание", de:"Bewusstsein", art:"das", parts:["Be","wusst","sein"] },
+      { ru:"реальность", de:"Realität", art:"die", parts:["Re","a","li","tät"] },
+      { ru:"абстракция", de:"Abstraktion", art:"die", parts:["Abs","trak","tion"] }
+    ]
+  },
+  {
+    name: "Бизнес",
+    words: [
+      { ru:"стратегия", de:"Strategie", art:"die", parts:["Stra","te","gie"] },
+      { ru:"конкуренция", de:"Konkurrenz", art:"die", parts:["Kon","kur","renz"] },
+      { ru:"партнёрство", de:"Partnerschaft", art:"die", parts:["Part","ner","schaft"] },
+      { ru:"рынок", de:"Markt", art:"der", parts:["Markt"] },
+      { ru:"спрос", de:"Nachfrage", art:"die", parts:["Nach","fra","ge"] },
+      { ru:"предложение", de:"Angebot", art:"das", parts:["An","ge","bot"] },
+      { ru:"прибыльность", de:"Rentabilität", art:"die", parts:["Ren","ta","bi","li","tät"] }
+    ]
+  },
+  {
+    name: "Международные отношения",
+    words: [
+      { ru:"дипломатия", de:"Diplomatie", art:"die", parts:["Di","plo","ma","tie"] },
+      { ru:"сотрудничество", de:"Zusammenarbeit", art:"die", parts:["Zu","sam","men","ar","beit"] },
+      { ru:"конфликт", de:"Konflikt", art:"der", parts:["Kon","flikt"] },
+      { ru:"переговоры", de:"Verhandlungen", art:"die", parts:["Ver","hand","lun","gen"] },
+      { ru:"союз", de:"Bündnis", art:"das", parts:["Bünd","nis"] },
+      { ru:"граница", de:"Grenze", art:"die", parts:["Gren","ze"] },
+      { ru:"договорённость", de:"Vereinbarung", art:"die", parts:["Ver","ein","ba","rung"] }
+    ]
+  },
+  {
+    name: "Культура и искусство",
+    words: [
+      { ru:"произведение", de:"Werk", art:"das", parts:["Werk"] },
+      { ru:"вдохновение", de:"Inspiration", art:"die", parts:["In","spi","ra","tion"] },
+      { ru:"творчество", de:"Kreativität", art:"die", parts:["Kre","a","ti","vi","tät"] },
+      { ru:"выражение", de:"Ausdruck", art:"der", parts:["Aus","druck"] },
+      { ru:"традиция", de:"Tradition", art:"die", parts:["Tra","di","tion"] },
+      { ru:"наследие", de:"Erbe", art:"das", parts:["Er","be"] },
+      { ru:"восприятие", de:"Wahrnehmung", art:"die", parts:["Wahr","nehm","ung"] }
+    ]
+  },
+  {
+    name: "Наука",
+    words: [
+      { ru:"гипотеза", de:"Hypothese", art:"die", parts:["Hy","po","the","se"] },
+      { ru:"доказательство", de:"Beweis", art:"der", parts:["Be","weis"] },
+      { ru:"теория", de:"Theorie", art:"die", parts:["The","o","rie"] },
+      { ru:"эксперимент", de:"Experiment", art:"das", parts:["Ex","pe","ri","ment"] },
+      { ru:"метод", de:"Methode", art:"die", parts:["Me","tho","de"] },
+      { ru:"результат", de:"Ergebnis", art:"das", parts:["Er","geb","nis"] },
+      { ru:"наблюдение", de:"Beobachtung", art:"die", parts:["Be","ob","ach","tung"] }
+    ]
+  },
+  {
+    name: "Личностное развитие",
+    words: [
+      { ru:"цель", de:"Ziel", art:"das", parts:["Ziel"] },
+      { ru:"достижение", de:"Erfolg", art:"der", parts:["Er","folg"] },
+      { ru:"самодисциплина", de:"Selbstdisziplin", art:"die", parts:["Selbst","dis","zi","plin"] },
+      { ru:"уверенность", de:"Selbstvertrauen", art:"das", parts:["Selbst","ver","trau","en"] },
+      { ru:"привычка", de:"Gewohnheit", art:"die", parts:["Ge","wohn","heit"] },
+      { ru:"рост", de:"Wachstum", art:"das", parts:["Wachs","tum"] },
+      { ru:"настойчивость", de:"Ausdauer", art:"die", parts:["Aus","dau","er"] }
+    ]
+  },
+  {
+    name: "Социальные проблемы",
+    words: [
+      { ru:"неравенство", de:"Ungleichheit", art:"die", parts:["Un","gleich","heit"] },
+      { ru:"бедность", de:"Armut", art:"die", parts:["Ar","mut"] },
+      { ru:"дискриминация", de:"Diskriminierung", art:"die", parts:["Dis","kri","mi","nie","rung"] },
+      { ru:"интеграция", de:"Integration", art:"die", parts:["In","te","gra","tion"] },
+      { ru:"доступ", de:"Zugang", art:"der", parts:["Zu","gang"] },
+      { ru:"поддержка", de:"Unterstützung", art:"die", parts:["Un","ter","stüt","zung"] },
+      { ru:"солидарность", de:"Solidarität", art:"die", parts:["So","li","da","ri","tät"] }
+    ]
+  },
+  {
+    name: "Город и инфраструктура",
+    words: [
+      { ru:"инфраструктура", de:"Infrastruktur", art:"die", parts:["In","fra","struk","tur"] },
+      { ru:"транспорт", de:"Verkehr", art:"der", parts:["Ver","kehr"] },
+      { ru:"жильё", de:"Wohnraum", art:"der", parts:["Wohn","raum"] },
+      { ru:"застройка", de:"Bebauung", art:"die", parts:["Be","bau","ung"] },
+      { ru:"доступность", de:"Erreichbarkeit", art:"die", parts:["Er","reich","bar","keit"] },
+      { ru:"район", de:"Stadtteil", art:"der", parts:["Stadt","teil"] },
+      { ru:"развитие", de:"Entwicklung", art:"die", parts:["Ent","wick","lung"] }
+    ]
+  },
+  {
+    name: "Этика и ценности",
+    words: [
+      { ru:"справедливость", de:"Gerechtigkeit", art:"die", parts:["Ge","recht","ig","keit"] },
+      { ru:"ответственность", de:"Verantwortung", art:"die", parts:["Ver","ant","wort","ung"] },
+      { ru:"уважение", de:"Respekt", art:"der", parts:["Re","spekt"] },
+      { ru:"честность", de:"Ehrlichkeit", art:"die", parts:["Ehr","lich","keit"] },
+      { ru:"совесть", de:"Gewissen", art:"das", parts:["Ge","wis","sen"] },
+      { ru:"принцип", de:"Prinzip", art:"das", parts:["Prin","zip"] },
+      { ru:"достоинство", de:"Würde", art:"die", parts:["Wür","de"] }
+    ]
+  },
+  {
+    name: "Глобальные вызовы",
+    words: [
+      { ru:"миграция", de:"Migration", art:"die", parts:["Mi","gra","tion"] },
+      { ru:"глобализация", de:"Globalisierung", art:"die", parts:["Glo","ba","li","sie","rung"] },
+      { ru:"безопасность", de:"Sicherheit", art:"die", parts:["Si","cher","heit"] },
+      { ru:"неопределённость", de:"Unsicherheit", art:"die", parts:["Un","si","cher","heit"] },
+      { ru:"риски", de:"Risiken", art:"die", parts:["Ri","si","ken"] },
+      { ru:"устойчивое развитие", de:"nachhaltige Entwicklung", art:"die", parts:["nach","hal","ti","ge","Ent","wick","lung"] },
+      { ru:"будущее", de:"Zukunft", art:"die", parts:["Zu","kunft"] }
     ]
   }
 ];
@@ -123,7 +362,7 @@ document.getElementById("openThemeBtn").onclick = () => {
 
   currentSet.words.forEach(w => {
     const li = document.createElement("li");
-    li.textContent = `${w.de} — ${w.ru}`;
+    li.textContent = `${w.art} ${w.de} — ${w.ru}`;
     wordsList.appendChild(li);
   });
 
